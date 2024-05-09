@@ -5,14 +5,14 @@ const CryptoConverter = () => {
   const [cryptos, setCryptos] = useState([]);
   const [fiats, setfiats] = useState([])
   const [selectedCrypto, setSelectedCrypto] = useState('');
+  const [selectedFiat, setSelectedFiat] = useState('')
   const [amount, setAmount] = useState('');
-  const [targetCurrency, setTargetCurrency] = useState('USD');
   const [convertedAmount, setConvertedAmount] = useState('');
 
   // Fetch the list of cryptocurrencies when the component mounts
   useEffect(() => {
     const fetchCryptos = async () => {
-      try { 
+      try {
         const { data } = await axios.get('http://localhost:5000/api/all-cryptos');
         setCryptos(data);
         console.log(data);
@@ -25,19 +25,20 @@ const CryptoConverter = () => {
     };
 
     const fetchFiats = async () => {
-      try { 
+      try {
         const { data } = await axios.get('http://localhost:5000/api/all-fiats');
         setfiats(data);
         console.log(data);
         if (data.length > 0) {
-          setSelectedCrypto(data[0]); // Default to the first crypto
+          setSelectedFiat(data[0]); // Default to the first crypto
         }
       } catch (error) {
-        console.error('Error fetching cryptocurrencies:', error);
+        console.error('Error fetching Fiats:', error);
       }
     };
 
     fetchCryptos();
+    fetchFiats();
   }, []);
 
   // Handle form submission
@@ -48,19 +49,27 @@ const CryptoConverter = () => {
       return;
     }
     try {
-      const { data } = await axios.get(`https://api.example.com/convert`, {
+      const { data } = await axios.get(`http://localhost:5000/api/price`, {
         params: {
-          source_crypto: selectedCrypto,
-          amount,
-          target_currency: targetCurrency
+          symbol: selectedCrypto,
+          convert: selectedFiat,
+          amount
         }
       });
-      setConvertedAmount(data.convertedAmount);
+      console.log("This are the variables", selectedCrypto, selectedFiat, amount)
+      console.log(data);
+      setConvertedAmount(data);
     } catch (error) {
       console.error('Error converting currency:', error);
     }
   };
-
+  function numberWithCommas(x) {
+    x = x.toString();
+    var pattern = /(-?\d+)(\d{3})/;
+    while (pattern.test(x))
+      x = x.replace(pattern, "$1,$2");
+    return x;
+  }
   return (
     <div className="converter-container">
       <form onSubmit={handleSubmit}>
@@ -92,8 +101,8 @@ const CryptoConverter = () => {
           <label htmlFor="target-currency">Target Currency:</label>
           <select
             id="target-currency"
-            value={targetCurrency}
-            onChange={e => setTargetCurrency(e.target.value)}
+            value={selectedFiat}
+            onChange={e => setSelectedFiat(e.target.value)}
           >
             {fiats.map(fiat => (
               <option value={fiat}>
@@ -105,7 +114,7 @@ const CryptoConverter = () => {
         <button type="submit">Convert</button>
         {convertedAmount && (
           <div className="result">
-            <p>Converted Amount: {convertedAmount}</p>
+            <p>Converted Amount: {numberWithCommas(Math.round(convertedAmount)) + " " + selectedFiat}</p>
           </div>
         )}
       </form>
