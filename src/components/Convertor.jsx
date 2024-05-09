@@ -1,23 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
+// The CryptoConverter component handles cryptocurrency to fiat conversion
 const CryptoConverter = () => {
   const [cryptos, setCryptos] = useState([]);
-  const [fiats, setfiats] = useState([])
+  const [fiats, setFiats] = useState([]);
   const [selectedCrypto, setSelectedCrypto] = useState('');
-  const [selectedFiat, setSelectedFiat] = useState('')
-  const [amount, setAmount] = useState('');
+  const [selectedFiat, setSelectedFiat] = useState('');
+  const [amount, setAmount] = useState('1');
   const [convertedAmount, setConvertedAmount] = useState('');
 
-  // Fetch the list of cryptocurrencies when the component mounts
+  // Fetch lists of cryptocurrencies and fiat currencies on component mount
   useEffect(() => {
     const fetchCryptos = async () => {
       try {
-        const { data } = await axios.get('http://localhost:5000/api/all-cryptos');
+        const { data } = await axios.get('http://localhost:5000/crypto/all-cryptos');
         setCryptos(data);
-        console.log(data);
         if (data.length > 0) {
-          setSelectedCrypto(data[0]); // Default to the first crypto
+          setSelectedCrypto(data[0]); // Default to the first item
         }
       } catch (error) {
         console.error('Error fetching cryptocurrencies:', error);
@@ -26,11 +26,10 @@ const CryptoConverter = () => {
 
     const fetchFiats = async () => {
       try {
-        const { data } = await axios.get('http://localhost:5000/api/all-fiats');
-        setfiats(data);
-        console.log(data);
+        const { data } = await axios.get('http://localhost:5000/fiat/all-fiats');
+        setFiats(data);
         if (data.length > 0) {
-          setSelectedFiat(data[0]); // Default to the first crypto
+          setSelectedFiat(data[0]); // Default to the first item
         }
       } catch (error) {
         console.error('Error fetching Fiats:', error);
@@ -41,7 +40,7 @@ const CryptoConverter = () => {
     fetchFiats();
   }, []);
 
-  // Handle form submission
+  // Convert the specified amount of cryptocurrency to fiat
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!amount || !selectedCrypto) {
@@ -49,27 +48,24 @@ const CryptoConverter = () => {
       return;
     }
     try {
-      const { data } = await axios.get(`http://localhost:5000/api/price`, {
+      const { data } = await axios.get(`http://localhost:5000/crypto/price`, {
         params: {
           symbol: selectedCrypto,
           convert: selectedFiat,
-          amount
+          amount: amount
         }
       });
-      console.log("This are the variables", selectedCrypto, selectedFiat, amount)
-      console.log(data);
       setConvertedAmount(data);
     } catch (error) {
       console.error('Error converting currency:', error);
     }
   };
+
+  // Helper function to format numbers with commas
   function numberWithCommas(x) {
-    x = x.toString();
-    var pattern = /(-?\d+)(\d{3})/;
-    while (pattern.test(x))
-      x = x.replace(pattern, "$1,$2");
-    return x;
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   }
+
   return (
     <div className="converter-container">
       <form onSubmit={handleSubmit}>
@@ -81,9 +77,7 @@ const CryptoConverter = () => {
             onChange={e => setSelectedCrypto(e.target.value)}
           >
             {cryptos.map(crypto => (
-              <option value={crypto}>
-                {crypto}
-              </option>
+              <option key={crypto} value={crypto}>{crypto}</option>
             ))}
           </select>
         </div>
@@ -105,9 +99,7 @@ const CryptoConverter = () => {
             onChange={e => setSelectedFiat(e.target.value)}
           >
             {fiats.map(fiat => (
-              <option value={fiat}>
-                {fiat}
-              </option>
+              <option key={fiat} value={fiat}>{fiat}</option>
             ))}
           </select>
         </div>
@@ -118,49 +110,50 @@ const CryptoConverter = () => {
           </div>
         )}
       </form>
-      <style jsx>{`.converter-container {
-            background-color: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-            width: 100%;
-            max-width: 400px;
-            margin: auto;
+      <style jsx>{`
+        .converter-container {
+          background-color: #fff;
+          padding: 20px;
+          border-radius: 8px;
+          box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+          width: 100%;
+          max-width: 400px;
+          margin: auto;
         }
 
         .form-group {
-            margin-bottom: 20px;
+          margin-bottom: 20px;
         }
 
         label {
-            display: block;
-            margin-bottom: 5px;
+          display: block;
+          margin-bottom: 5px;
         }
 
         input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
+          width: 100%;
+          padding: 10px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
         }
 
         button {
-            width: 100%;
-            padding: 10px;
-            background-color: #007bff;
-            color: white;
-            border: none;
-            border-radius: 4px;
-            cursor: pointer;
+          width: 100%;
+          padding: 10px;
+          background-color: #007bff;
+          color: white;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
         }
 
         button:hover {
-            background-color: #0056b3;
+          background-color: #0056b3;
         }
 
         .result {
-            margin-top: 20px;
-            font-size: 16px;
+          margin-top: 20px;
+          font-size: 16px;
         }
       `}</style>
     </div>
